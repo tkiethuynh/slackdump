@@ -1,4 +1,21 @@
-steps:
+name: Multi-Arch Build to GHCR
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -19,6 +36,6 @@ steps:
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/386
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/slackdump-multiarch:latest
