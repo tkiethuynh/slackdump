@@ -1,17 +1,24 @@
-FROM alpine:latest
-RUN apk add --no-cache ca-certificates curl
+steps:
+      - name: Checkout
+        uses: actions/checkout@v6
 
-ARG TARGETARCH
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
 
-RUN case "${TARGETARCH}" in \
-    "amd64")  ARCH="x86_64" ;; \
-    "arm64")  ARCH="arm64" ;; \
-    *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1 ;; \
-    esac && \
-    wget https://github.com/rusq/slackdump/releases/latest/download/slackdump_Linux_${ARCH}.tar.gz && \
-    tar -xzf slackdump_Linux_${ARCH}.tar.gz && \
-    mv slackdump /usr/local/bin/ && \
-    rm slackdump_Linux_${ARCH}.tar.gz
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
-WORKDIR /data
-ENTRYPOINT ["slackdump"]
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/slackdump-multiarch:latest
